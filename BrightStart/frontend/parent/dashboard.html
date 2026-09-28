@@ -1,0 +1,239 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/app.css"
+    >
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <title>Parent Dashboard</title>
+</head>
+
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/app.js"></script>
+
+    <script>
+
+        parentGuard();
+
+        const s = session();
+
+        const c = s.child || {};
+
+        const ns = store
+            .get('bs_notifications', [])
+            .filter(n => n.email === s.email);
+
+        const bs = store
+            .get('bs_bookings', [])
+            .filter(b => b.email === s.email);
+
+
+        shell(
+            'parent',
+            'dashboard',
+            'Parent Dashboard',
+
+            `
+
+            <!-- WELCOME SECTION -->
+
+            <div class="welcome">
+
+                <div>
+
+                    <h1>
+                        Welcome, ${s.parentName || 'Parent'} 👋
+                    </h1>
+
+                    <p>
+                        Manage ${c.first || 'your child'}'s tutoring,
+                        bookings, payments and learning progress
+                        from one place.
+                    </p>
+
+                </div>
+
+
+                <img
+                    src="../assets/images/${c.gender === 'Boy'
+                        ? 'boy.jpg'
+                        : 'girl.png'}"
+                    alt="Learner"
+                >
+
+            </div>
+
+
+            <!-- NOTIFICATION -->
+
+            ${ns.length
+                ? `
+
+                <div class="notice">
+
+                    <b>Notification:</b>
+
+                    ${ns[0].message}
+
+                    <div class="small">
+                        ${ns[0].date}
+                    </div>
+
+                </div>
+
+                `
+                : ''
+            }
+
+
+            <!-- DASHBOARD SUMMARY -->
+
+            <div class="cards">
+
+
+                <div class="card">
+
+                    <h3>My Child</h3>
+
+                    <div class="metric">
+                        ${c.first || '—'}
+                    </div>
+
+                    <p>
+                        ${c.grade || ''}
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>Bookings</h3>
+
+                    <div class="metric">
+                        ${bs.length}
+                    </div>
+
+                    <p>
+                        Total sessions booked
+                    </p>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>Latest Payment</h3>
+
+                    <div class="metric">
+                        ${bs[0]?.paymentStatus || '—'}
+                    </div>
+
+                    <p>
+                        Payment verification status
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- QUICK ACTIONS -->
+
+            <h2>
+                What would you like to do?
+            </h2>
+
+
+            <div class="cards">
+
+
+                <!-- BOOK SESSION -->
+
+                <a
+                    class="card"
+                    href="booking.html"
+                >
+
+                    <h3>
+                        <i data-lucide="calendar-plus"></i>
+                        Book a Session
+                    </h3>
+
+                    <p>
+                        Choose a grade, program,
+                        date and time.
+                    </p>
+
+                </a>
+
+
+                <!-- VIEW PROGRESS -->
+
+                <a
+                    class="card"
+                    href="progress.html"
+                >
+
+                    <h3>
+                        <i data-lucide="chart-no-axes-column-increasing"></i>
+                        View Progress
+                    </h3>
+
+                    <p>
+                        See ${c.first || 'your child'}'s
+                        reading, writing and speaking progress.
+                    </p>
+
+                </a>
+
+
+                <!-- CONTACT -->
+
+                <a
+                    class="card"
+                    href="contact.html"
+                >
+
+                    <h3>
+                        <i data-lucide="message-circle"></i>
+                        Contact BrightStart
+                    </h3>
+
+                    <p>
+                        Call, WhatsApp or email us.
+                    </p>
+
+                </a>
+
+
+            </div>
+
+            `
+        );
+
+
+        /* Convert Lucide placeholders into SVG icons */
+        lucide.createIcons();
+
+    </script>
+
+</body>
+
+</html>

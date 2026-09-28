@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="../css/app.css">
+
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+
+    <script src="../js/app.js"></script>
+
+    <script>
+        adminGuard();
+
+        const a = store.get('bs_bookings', []);
+        const u = store.get('bs_parent');
+
+        shell(
+            'admin',
+            'dashboard',
+            'Admin Dashboard',
+            `
+            <div class="welcome">
+
+                <div>
+                    <h1>BrightStart Tutor/Admin</h1>
+
+                    <p>
+                        Manage bookings, payment verification,
+                        learners and progress.
+                    </p>
+                </div>
+
+                <img src="../assets/images/logo.png"
+                     alt="BrightStart Logo"
+                     style= "width:150px; height:150px; object-fit:contain;">
+
+            </div>
+
+            <div class="cards">
+
+                <div class="card">
+                    <h3>Bookings</h3>
+
+                    <div class="metric">
+                        ${a.length}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Awaiting Verification</h3>
+
+                    <div class="metric">
+                        ${
+                            a.filter(
+                                x => x.paymentStatus === 'Pending Verification'
+                            ).length
+                        }
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Registered Learners</h3>
+
+                    <div class="metric">
+                        ${u ? 1 : 0}
+                    </div>
+                </div>
+
+            </div>
+            `
+        );
+    </script>
+
+</body>
+
+</html>

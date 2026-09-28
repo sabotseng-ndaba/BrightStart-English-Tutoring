@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="../css/app.css">
+
+    <title>Book Session</title>
+</head>
+
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/app.js"></script>
+
+    <script>
+
+        parentGuard();
+
+        const s = session();
+        const c = s.child || {};
+
+        shell(
+            'parent',
+            'booking',
+            'Book a Session',
+
+            `
+            <h1>
+                Book for ${c.first || 'your child'}
+            </h1>
+
+            <div class="card">
+
+                <form id="bf" class="form-grid">
+
+                    <div class="field">
+                        <label>Learner</label>
+
+                        <input
+                            value="${c.first || ''} ${c.last || ''}"
+                            disabled
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label>Grade</label>
+
+                        <input
+                            value="${c.grade || ''}"
+                            disabled
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label>Program</label>
+
+                        <select id="program">
+                            <option>Reading Lessons</option>
+                            <option>Writing Skills</option>
+                            <option>Homework Help</option>
+                            <option>Speaking Practice</option>
+                        </select>
+                    </div>
+
+
+                    <div class="field">
+                        <label>Session Type</label>
+
+                        <select id="type">
+                            <option>Group Session</option>
+                            <option>1-on-1 Session</option>
+                        </select>
+                    </div>
+
+
+                    <div class="field">
+                        <label>Date</label>
+
+                        <input
+                            id="date"
+                            type="date"
+                            required
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label>Time</label>
+
+                        <select id="time">
+                            <option>15:00 - 16:00</option>
+                            <option>16:00 - 17:00</option>
+                        </select>
+                    </div>
+
+
+                    <div class="field">
+                        <label>Number of learners</label>
+
+                        <input
+                            id="qty"
+                            type="number"
+                            min="1"
+                            max="10"
+                            value="1"
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label>Total</label>
+
+                        <input
+                            id="total"
+                            value="R150"
+                            disabled
+                        >
+                    </div>
+
+
+                    <div class="field full">
+
+                        <button class="btn btn-blue">
+                            Continue to Payment
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+            `
+        );
+
+
+        /* Update total when number of learners changes */
+
+        qty.oninput = () => {
+
+            total.value =
+                'R' + (150 * qty.value);
+        };
+
+
+        /* Booking form submission */
+
+        bf.onsubmit = async e => {
+
+            e.preventDefault();
+
+
+            const b = {
+
+                id:
+                    'BS-' +
+                    Date.now()
+                        .toString()
+                        .slice(-6),
+
+                email: s.email,
+
+                learner:
+                    (c.first || '') +
+                    ' ' +
+                    (c.last || ''),
+
+                grade: c.grade,
+
+                program: program.value,
+
+                type: type.value,
+
+                date: date.value,
+
+                time: time.value,
+
+                qty: +qty.value,
+
+                total:
+                    150 * qty.value,
+
+                paymentStatus:
+                    'Pending',
+
+                bookingStatus:
+                    'Awaiting Payment',
+
+                proof: ''
+            };
+
+            const { data: bookingData, error: bookingError } =
+                await supabaseClient
+                    .from('bookings')
+                    .insert([
+                        {
+                            parent_email: s.email,
+                            child_name: b.learner,
+                            grade: b.grade,
+                            program: b.program,
+                            booking_date: b.date,
+                            booking_time: b.time,
+                            status: b.bookingStatus
+                        }
+                    ])
+                    .select()
+                    .single();
+
+            if (bookingError) {
+                console.error(bookingError);
+                alert(
+                    'Booking could not be saved: ' +
+                    bookingError.message
+                );
+                return;
+            }
+
+            b.supabaseBookingId = bookingData.id;
+
+            console.log('Supabase Booking ID:', b.supabaseBookingId);
+
+            const a =
+                store.get(
+                    'bs_bookings',
+                    []
+                );
+
+
+            a.unshift(b);
+
+
+            store.set(
+                'bs_bookings',
+                a
+            );
+
+
+            store.set(
+                'bs_current_booking',
+                b.id
+            );
+
+
+            location.href =
+                'payments.html';
+        };
+
+    </script>
+
+</body>
+
+</html>

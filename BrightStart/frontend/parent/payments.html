@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="../css/app.css">
+
+    <title>Payments</title>
+</head>
+
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/app.js"></script>
+
+    <script>
+
+        parentGuard();
+
+        const s = session();
+
+        const a = store
+            .get('bs_bookings', [])
+            .filter(b => b.email === s.email);
+
+
+        shell(
+            'parent',
+            'payments',
+            'Payments',
+
+            `
+            <h1>EFT / Bank Deposit</h1>
+
+
+            <div class="notice">
+                Demo details only — replace with approved BrightStart
+                banking details before real use.
+            </div>
+
+
+            <div class="card">
+
+                <b>Account Name:</b>
+                BrightStart English Tutoring
+
+                <br>
+
+                <b>Bank:</b>
+                Demo Bank
+
+                <br>
+
+                <b>Account:</b>
+                000 000 0000
+
+                <br>
+
+                <b>Reference:</b>
+                Use your booking reference
+
+            </div>
+
+
+            <h2>Your Payments</h2>
+
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <tr>
+                        <th>Reference</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Proof</th>
+                    </tr>
+
+
+                    ${a.map(
+                b => `
+
+                            <tr>
+
+                                <td>
+                                    ${b.id}
+                                </td>
+
+
+                                <td>
+                                    R${b.total}
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="status ${b.paymentStatus === 'Verified'
+                        ? 'paid'
+                        : 'pending'
+                    }"
+                                    >
+                                        ${b.paymentStatus}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    ${b.paymentStatus === 'Verified'
+
+                        ? 'Verified ✓'
+
+                        : `
+
+                                                <input
+                                                    type="file"
+                                                    onchange="uploadProof('${b.id}', this)"
+                                                >
+
+                                                <div class="small">
+                                                    ${b.proof || 'No file selected'}
+                                                </div>
+
+                                              `
+                    }
+
+                                </td>
+
+                            </tr>
+
+                            `
+            ).join('')
+
+            ||
+
+            `
+                        <tr>
+                            <td colspan="4">
+                                Book a session first.
+                            </td>
+                        </tr>
+                        `
+            }
+
+                </table>
+
+            </div>
+            `
+        );
+
+
+        async function uploadProof(id, el) {
+
+            const all =
+                store.get(
+                    'bs_bookings',
+                    []
+                );
+
+
+            const b =
+                all.find(
+                    x => x.id === id
+                );
+
+
+
+
+
+            if (el.files[0]) {
+
+                const { data: paymentData, error: paymentError } =
+                    await supabaseClient
+                        .from('payments')
+                        .insert([
+                            {
+                                booking_id: b.supabaseBookingId,
+                                parent_email: s.email,
+                                amount: b.total,
+                                payment_method: 'EFT / Bank Deposit',
+                                proof_of_payment: el.files[0].name,
+                                payment_status: 'Pending Verification'
+                            }
+                        ]);
+
+                if (paymentError) {
+                    console.error(paymentError);
+
+                    alert(
+                        'Payment could not be submitted: ' +
+                        paymentError.message
+                    );
+
+                    return;
+                }
+
+
+                b.proof =
+                    el.files[0].name;
+
+
+                b.paymentStatus =
+                    'Pending Verification';
+
+
+                b.bookingStatus =
+                    'Awaiting Verification';
+
+
+                store.set(
+                    'bs_bookings',
+                    all
+                );
+
+
+                alert(
+                    'Proof of payment submitted for admin verification.'
+                );
+
+
+                location.reload();
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
