@@ -3,15 +3,112 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="../css/app.css">
+
     <title>Programs</title>
 </head>
 
 <body>
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
-    <script>parentGuard(); shell('parent', 'programs', 'Programs', `<h1>Our Programs</h1><div class="program-grid"><div class="card"><h3>Reading Lessons</h3><p>Phonics, word recognition, reading fluency and comprehension.</p><b class="green">R150 / week</b></div><div class="card"><h3>Writing Skills</h3><p>Sentence building, handwriting, spelling and creative writing.</p><b class="green">R150 / week</b></div><div class="card"><h3>Homework Help</h3><p>Assistance with homework and class activities.</p><b class="green">R150 / week</b></div><div class="card"><h3>Speaking Practice</h3><p>Pronunciation, confidence and communication.</p><b class="green">R150 / week</b></div></div>`)</script>
+
+    <script>
+        parentGuard();
+
+        shell(
+            'parent',
+            'programs',
+            'Programs',
+
+            `
+            <h1>Our Programs</h1>
+
+            <div class="program-grid">
+
+                <!-- Reading Lessons -->
+                <div class="card">
+
+                    <h3>
+                        Reading Lessons
+                    </h3>
+
+                    <p>
+                        Phonics, word recognition, reading fluency
+                        and comprehension.
+                    </p>
+
+                    <b class="green">
+                        R150 / week
+                    </b>
+
+                </div>
+
+
+                <!-- Writing Skills -->
+                <div class="card">
+
+                    <h3>
+                        Writing Skills
+                    </h3>
+
+                    <p>
+                        Sentence building, handwriting, spelling
+                        and creative writing.
+                    </p>
+
+                    <b class="green">
+                        R150 / week
+                    </b>
+
+                </div>
+
+
+                <!-- Homework Help -->
+                <div class="card">
+
+                    <h3>
+                        Homework Help
+                    </h3>
+
+                    <p>
+                        Assistance with homework and class activities.
+                    </p>
+
+                    <b class="green">
+                        R150 / week
+                    </b>
+
+                </div>
+
+
+                <!-- Speaking Practice -->
+                <div class="card">
+
+                    <h3>
+                        Speaking Practice
+                    </h3>
+
+                    <p>
+                        Pronunciation, confidence and communication.
+                    </p>
+
+                    <b class="green">
+                        R150 / week
+                    </b>
+
+                </div>
+
+            </div>
+            `
+        );
+    </script>
+
 </body>
 
 </html>

@@ -3,15 +3,97 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="../css/app.css">
+
     <title>Contact</title>
 </head>
 
 <body>
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
-    <script>parentGuard(); shell('parent', 'contact', 'Contact / About', `<div class="contact-grid"><img src="../assets/images/about-kids.png"><div><h1>We're here to help.</h1><div class="contact-list"><a class="contact-item" href="tel:+27745584629"><b>☎ Phone</b><br>074 558 4629</a><a class="contact-item" target="_blank" href="https://wa.me/27745584629?text=Hello%20BrightStart%2C%20I%20need%20assistance%20with%20my%20child%27s%20tutoring."><b>WhatsApp</b><br>Open WhatsApp</a><div class="contact-item"><b>Location</b><br>District Six, Cape Town</div><a class="contact-item" href="mailto:info@brightstartenglish.co.za"><b>Email</b><br>info@brightstartenglish.co.za</a></div></div></div>`)</script>
+
+    <script>
+        parentGuard();
+
+        shell(
+            'parent',
+            'contact',
+            'Contact / About',
+
+            `
+            <div class="contact-grid">
+
+                <img
+                    src="../assets/images/about-kids.png"
+                    alt="BrightStart learners"
+                >
+
+                <div>
+
+                    <h1>
+                        We're here to help.
+                    </h1>
+
+                    <div class="contact-list">
+
+                        <!-- Phone -->
+                        <a
+                            class="contact-item"
+                            href="tel:+27745584629"
+                        >
+                            <b>☎ Phone</b>
+                            <br>
+                            074 558 4629
+                        </a>
+
+
+                        <!-- WhatsApp -->
+                        <a
+                            class="contact-item"
+                            target="_blank"
+                            href="https://wa.me/27745584629?text=Hello%20BrightStart%2C%20I%20need%20assistance%20with%20my%20child%27s%20tutoring."
+                        >
+                            <b>WhatsApp</b>
+                            <br>
+                            Open WhatsApp
+                        </a>
+
+
+                        <!-- Location -->
+                        <div class="contact-item">
+
+                            <b>Location</b>
+                            <br>
+                            District Six, Cape Town
+
+                        </div>
+
+
+                        <!-- Email -->
+                        <a
+                            class="contact-item"
+                            href="mailto:info@brightstartenglish.co.za"
+                        >
+                            <b>Email</b>
+                            <br>
+                            info@brightstartenglish.co.za
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+            `
+        );
+    </script>
+
 </body>
 
 </html>

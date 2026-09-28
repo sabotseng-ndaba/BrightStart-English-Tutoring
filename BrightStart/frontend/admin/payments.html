@@ -1,1 +1,154 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../css/app.css"><title>Payments</title></head><body><script src="../js/app.js"></script><script>adminGuard();const a=store.get('bs_bookings',[]);shell('admin','payments','Payment Verification',`<h1>Verify Proof of Payment</h1><div class="table-wrap"><table><tr><th>Ref</th><th>Parent</th><th>Amount</th><th>Proof</th><th>Status</th><th>Action</th></tr>${a.map(b=>`<tr><td>${b.id}</td><td>${b.email}</td><td>R${b.total}</td><td>${b.proof||'Not uploaded'}</td><td>${b.paymentStatus}</td><td>${b.proof&&b.paymentStatus!=='Verified'?`<button class="btn btn-green" onclick="verify('${b.id}')">Verify</button> <button class="btn btn-outline" onclick="rejectPay('${b.id}')">Reject</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="6">No payments.</td></tr>'}</table></div>`);function verify(id){const all=store.get('bs_bookings',[]),b=all.find(x=>x.id===id);b.paymentStatus='Verified';b.bookingStatus='Confirmed';store.set('bs_bookings',all);notifyParent(b.email,`Payment for booking ${b.id} has been verified. Your tutoring session is confirmed and good to go.`);alert('Payment verified. An in-app notification was sent to the parent.');location.reload()}function rejectPay(id){const all=store.get('bs_bookings',[]),b=all.find(x=>x.id===id);b.paymentStatus='Rejected';b.bookingStatus='Payment Action Required';store.set('bs_bookings',all);notifyParent(b.email,`Proof of payment for booking ${b.id} could not be verified. Please upload a new proof of payment or contact BrightStart.`);location.reload()}</script></body></html>
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="../css/app.css">
+
+    <title>Payments</title>
+</head>
+
+<body>
+
+    <!-- Main Application JavaScript -->
+    <script src="../js/app.js"></script>
+
+    <script>
+        adminGuard();
+
+        const a = store.get('bs_bookings', []);
+
+
+        shell(
+            'admin',
+            'payments',
+            'Payment Verification',
+
+            `
+            <h1>Verify Proof of Payment</h1>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <tr>
+                        <th>Ref</th>
+                        <th>Parent</th>
+                        <th>Amount</th>
+                        <th>Proof</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+
+                    ${a.map(b => `
+
+                        <tr>
+
+                            <td>
+                                ${b.id}
+                            </td>
+
+                            <td>
+                                ${b.email}
+                            </td>
+
+                            <td>
+                                R${b.total}
+                            </td>
+
+                            <td>
+                                ${b.proof || 'Not uploaded'}
+                            </td>
+
+                            <td>
+                                ${b.paymentStatus}
+                            </td>
+
+                            <td>
+
+                                ${b.proof && b.paymentStatus !== 'Verified' ? `
+
+                                    <button
+                                        class="btn btn-green"
+                                        onclick="verify('${b.id}')"
+                                    >
+                                        Verify
+                                    </button>
+
+                                    <button
+                                        class="btn btn-outline"
+                                        onclick="rejectPay('${b.id}')"
+                                    >
+                                        Reject
+                                    </button>
+
+                                ` : '—'}
+
+                            </td>
+
+                        </tr>
+
+                    `).join('') || `
+
+                        <tr>
+                            <td colspan="6">
+                                No payments.
+                            </td>
+                        </tr>
+
+                    `}
+
+                </table>
+
+            </div>
+            `
+        );
+
+
+        function verify(id) {
+
+            const all = store.get('bs_bookings', []);
+            const b = all.find(x => x.id === id);
+
+            b.paymentStatus = 'Verified';
+            b.bookingStatus = 'Confirmed';
+
+            store.set('bs_bookings', all);
+
+            notifyParent(
+                b.email,
+                `Payment for booking ${b.id} has been verified. Your tutoring session is confirmed and good to go.`
+            );
+
+            alert(
+                'Payment verified. An in-app notification was sent to the parent.'
+            );
+
+            location.reload();
+        }
+
+
+        function rejectPay(id) {
+
+            const all = store.get('bs_bookings', []);
+            const b = all.find(x => x.id === id);
+
+            b.paymentStatus = 'Rejected';
+            b.bookingStatus = 'Payment Action Required';
+
+            store.set('bs_bookings', all);
+
+            notifyParent(
+                b.email,
+                `Proof of payment for booking ${b.id} could not be verified. Please upload a new proof of payment or contact BrightStart.`
+            );
+
+            location.reload();
+        }
+    </script>
+
+</body>
+
+</html>

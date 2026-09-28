@@ -3,15 +3,110 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="../css/app.css">
+
     <title>Child Progress</title>
 </head>
 
 <body>
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
-    <script>parentGuard(); const s = session(), c = s.child || {}, p = store.get('bs_progress', {})[s.email] || { reading: 0, writing: 0, comprehension: 0, speaking: 0, comment: 'No tutor progress update has been added yet.' }; shell('parent', 'progress', "My Child's Progress", `<div class="progress-wrap"><div class="card child-card"><img src="../assets/images/${c.gender === 'Boy' ? 'boy.jpg' : 'girl.png'}"><h2>${c.first || ''} ${c.last || ''}</h2><p>${c.grade || ''}</p></div><div class="card"><h2>Skills Overview</h2>${['reading', 'writing', 'comprehension', 'speaking'].map(k => `<div class="bar-row"><b>${k[0].toUpperCase() + k.slice(1)}</b><div class="bar"><span style="width:${p[k]}%"></span></div><b>${p[k]}%</b></div>`).join('')}<h3>Tutor Comments</h3><p>${p.comment}</p></div></div>`)</script>
+
+    <script>
+        parentGuard();
+
+        const s = session();
+        const c = s.child || {};
+
+        const p = store.get('bs_progress', {})[s.email] || {
+            reading: 0,
+            writing: 0,
+            comprehension: 0,
+            speaking: 0,
+            comment: 'No tutor progress update has been added yet.'
+        };
+
+
+        shell(
+            'parent',
+            'progress',
+            "My Child's Progress",
+
+            `
+            <div class="progress-wrap">
+
+                <!-- Child Information -->
+                <div class="card child-card">
+
+                    <img
+                        src="../assets/images/${c.gender === 'Boy' ? 'boy.png' : 'girl.png'}"
+                    >
+
+                    <h2>
+                        ${c.first || ''} ${c.last || ''}
+                    </h2>
+
+                    <p>
+                        ${c.grade || ''}
+                    </p>
+
+                </div>
+
+
+                <!-- Progress Information -->
+                <div class="card">
+
+                    <h2>
+                        Skills Overview
+                    </h2>
+
+                    ${[
+                        'reading',
+                        'writing',
+                        'comprehension',
+                        'speaking'
+                    ].map(k => `
+
+                        <div class="bar-row">
+
+                            <b>
+                                ${k[0].toUpperCase() + k.slice(1)}
+                            </b>
+
+                            <div class="bar">
+                                <span style="width: ${p[k]}%"></span>
+                            </div>
+
+                            <b>
+                                ${p[k]}%
+                            </b>
+
+                        </div>
+
+                    `).join('')}
+
+
+                    <h3>
+                        Tutor Comments
+                    </h3>
+
+                    <p>
+                        ${p.comment}
+                    </p>
+
+                </div>
+
+            </div>
+            `
+        );
+    </script>
+
 </body>
 
 </html>
