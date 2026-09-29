@@ -108,25 +108,27 @@
 
                         ${a.map(b => {
 
-                            const payment =
-                                paymentList.find(
-                                    p => Number(p.booking_id) === Number(b.id)
-                                );
+                    const payment =
+                        paymentList.find(
+                            p => Number(p.booking_id) === Number(b.id)
+                        );
 
 
-                            const paymentStatus =
-                                payment
-                                    ? payment.payment_status
-                                    : 'Pending';
+                    const paymentStatus =
+                        payment
+                            ? payment.payment_status
+                            : 'Pending';
 
 
-                            const amount =
-                                payment
-                                    ? `R${payment.amount}`
-                                    : '—';
+                    const amount =
+                        payment && payment.amount != null
+                            ? `R${payment.amount}`
+                            : b.amount != null
+                                ? `R${b.amount}`
+                                : '—';
 
 
-                            return `
+                    return `
 
                                 <tr>
 
@@ -157,11 +159,10 @@
                                     <td>
 
                                         <span
-                                            class="status ${
-                                                paymentStatus === 'Verified'
-                                                    ? 'paid'
-                                                    : 'pending'
-                                            }"
+                                            class="status ${paymentStatus === 'Verified'
+                            ? 'paid'
+                            : 'pending'
+                        }"
                                         >
                                             ${paymentStatus}
                                         </span>
@@ -171,7 +172,7 @@
                                 </tr>
                             `;
 
-                        }).join('') || `
+                }).join('') || `
 
                             <tr>
 

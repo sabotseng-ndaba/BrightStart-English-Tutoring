@@ -20,7 +20,7 @@
 
     <script>
 
-        adminGuard();
+        staffGuard();
 
 
         let learners = [];
@@ -218,7 +218,7 @@
                 option.value = index;
 
                 option.textContent =
-                    `${learner.child_first_name || ''} ${learner.child_last_name || ''} - Grade ${learner.child_grade || '—'}`;
+                    `${learner.child_first_name || ''} ${learner.child_last_name || ''} -  ${learner.child_grade || '—'}`;
 
                 learnerSelect.appendChild(option);
             });

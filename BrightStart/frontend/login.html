@@ -204,30 +204,73 @@
 
             } else {
 
-                const a = store
-                    .get('bs_admins', [])
-                    .find(
-                        x =>
-                            x.email.toLowerCase() === email.value.toLowerCase() &&
-                            x.password === password.value
-                    );
+                const {
+                    data: authData,
+                    error: authError
+                } = await supabaseClient.auth.signInWithPassword({
+                    email: email.value.trim(),
+                    password: password.value
+                });
 
-                if (a) {
+                if (authError) {
+                    msg.textContent = 'Invalid staff email or password.';
+                    return;
+                }
 
-                    store.set('bs_session', {
-                        role: 'admin',
-                        email: a.email,
-                        name: a.first + ' ' + a.last
-                    });
+
+                // Get the staff profile linked to this Auth account
+                const {
+                    data: staffData,
+                    error: staffError
+                } = await supabaseClient
+                    .from('staff')
+                    .select('*')
+                    .eq('user_id', authData.user.id)
+                    .maybeSingle();
+
+
+                if (staffError || !staffData) {
+
+                    await supabaseClient.auth.signOut();
+
+                    msg.textContent =
+                        'This account is not registered as a BrightStart staff member.';
+
+                    return;
+                }
+
+
+                // Create the BrightStart staff session
+                store.set('bs_session', {
+                    role: staffData.role,
+                    email: staffData.email,
+                    name:
+                        `${staffData.first_name || ''} ${staffData.last_name || ''}`.trim(),
+                    user_id: staffData.user_id
+                });
+
+
+                // Send each staff role to the correct area
+                if (staffData.role === 'admin') {
 
                     location.href = 'admin/dashboard.html';
 
+                } else if (staffData.role === 'tutor') {
+
+                    location.href = 'admin/progress.html';
+
                 } else {
 
+                    await supabaseClient.auth.signOut();
+                    store.remove('bs_session');
+
                     msg.textContent =
-                        'Tutor/Admin login details are incorrect.';
+                        'Your staff account does not have a valid role.';
+
+                    return;
                 }
-            }
+
+        }
         };
 
     </script>

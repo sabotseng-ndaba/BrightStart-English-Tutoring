@@ -44,26 +44,6 @@ const store = {
    DEFAULT DATA
 ========================= */
 
-function seed() {
-
-    if (!store.get('bs_admins')) {
-
-        store.set('bs_admins', [
-            {
-                first: 'Amanda',
-                last: 'Jacobs',
-                email: 'amanda.jacobs@brightstartenglish.co.za',
-                password: 'Aobs',
-                role: 'Tutor/Admin'
-            }
-        ]);
-    }
-
-
-    
-}
-
-seed();
 
 
 /* =========================
@@ -88,13 +68,22 @@ function toggleMenu() {
    LOGOUT
 ========================= */
 
-function logout() {
+async function logout() {
+
+    const { error } =
+        await supabaseClient.auth.signOut();
+
+    if (error) {
+        console.error(
+            'Supabase logout error:',
+            error
+        );
+    }
 
     localStorage.removeItem('bs_session');
 
     location.href = '../login.html';
 }
-
 
 /* =========================
    LOGIN GUARDS
@@ -124,7 +113,17 @@ function adminGuard() {
         location.href = '../login.html';
     }
 }
+function staffGuard() {
 
+    const currentSession = store.get('bs_session');
+
+    if (
+        !currentSession ||
+        !['admin', 'tutor'].includes(currentSession.role)
+    ) {
+        location.href = '../login.html';
+    }
+}
 
 /* =========================
    CURRENT SESSION
@@ -534,17 +533,20 @@ function parentNav(active = '') {
 
 
 /* =========================================================
-   ADMIN SIDEBAR
+   ADMIN / TUTOR SIDEBAR
 ========================================================= */
 
 function adminNav(active = '') {
+
+    const currentSession = store.get('bs_session');
+    const isAdmin = currentSession?.role === 'admin';
 
     return `
 
         <aside class="sidebar">
 
 
-            <!-- ADMIN BRAND -->
+            <!-- STAFF BRAND -->
 
             <div class="side-brand">
 
@@ -561,7 +563,9 @@ function adminNav(active = '') {
                     </strong>
 
                     <div>
-                        Admin Portal
+                        ${isAdmin
+                            ? 'Admin Portal'
+                            : 'Tutor Portal'}
                     </div>
 
                 </div>
@@ -569,51 +573,55 @@ function adminNav(active = '') {
             </div>
 
 
-            <!-- ADMIN NAVIGATION -->
+            <!-- STAFF NAVIGATION -->
 
             <nav class="nav">
 
 
-                <a
-                    class="${active === 'dashboard' ? 'active' : ''}"
-                    href="dashboard.html"
-                >
+                ${isAdmin ? `
 
-                    ${icon('dashboard')}
+                    <a
+                        class="${active === 'dashboard' ? 'active' : ''}"
+                        href="dashboard.html"
+                    >
 
-                    <span>
-                        Dashboard
-                    </span>
+                        ${icon('dashboard')}
 
-                </a>
+                        <span>
+                            Dashboard
+                        </span>
 
-
-                <a
-                    class="${active === 'bookings' ? 'active' : ''}"
-                    href="bookings.html"
-                >
-
-                    ${icon('bookings')}
-
-                    <span>
-                        Bookings
-                    </span>
-
-                </a>
+                    </a>
 
 
-                <a
-                    class="${active === 'payments' ? 'active' : ''}"
-                    href="payments.html"
-                >
+                    <a
+                        class="${active === 'bookings' ? 'active' : ''}"
+                        href="bookings.html"
+                    >
 
-                    ${icon('payments')}
+                        ${icon('bookings')}
 
-                    <span>
-                        Payments
-                    </span>
+                        <span>
+                            Bookings
+                        </span>
 
-                </a>
+                    </a>
+
+
+                    <a
+                        class="${active === 'payments' ? 'active' : ''}"
+                        href="payments.html"
+                    >
+
+                        ${icon('payments')}
+
+                        <span>
+                            Payments
+                        </span>
+
+                    </a>
+
+                ` : ''}
 
 
                 <a
@@ -667,7 +675,8 @@ function adminNav(active = '') {
     `;
 }
 
-
+                    
+                
 /* =========================================================
    PAGE SHELL
 ========================================================= */
@@ -684,15 +693,15 @@ function shell(
         <div class="
             app-shell
             ${role === 'admin'
-                ? 'admin-accent'
-                : ''}
+            ? 'admin-accent'
+            : ''}
         ">
 
 
             ${role === 'admin'
-                ? adminNav(active)
-                : parentNav(active)
-            }
+            ? adminNav(active)
+            : parentNav(active)
+        }
 
 
             <!-- MOBILE OVERLAY -->
@@ -729,9 +738,9 @@ function shell(
                     <span>
 
                         ${role === 'parent'
-                            ? session().parentName || 'Parent'
-                            : session().name || 'Tutor/Admin'
-                        }
+            ? session().parentName || 'Parent'
+            : session().name || 'Tutor/Admin'
+        }
 
                     </span>
 
