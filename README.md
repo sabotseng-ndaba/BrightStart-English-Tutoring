@@ -33,7 +33,7 @@ Deployment:
 - Vercel
 
 
-=========================================================
+
 HOW TO RUN THE PROJECT LOCALLY
 =========================================================
 
@@ -47,7 +47,7 @@ HOW TO RUN THE PROJECT LOCALLY
    and payment proof uploads.
 
 
-=========================================================
+
 USER ROLES
 =========================================================
 
@@ -99,7 +99,7 @@ The Administrator can:
 - Monitor system activity through dashboard statistics.
 
 
-=========================================================
+
 BACKEND AND DATABASE
 =========================================================
 
@@ -127,7 +127,7 @@ Role-based access is used to determine which parts of the system each staff
 member can access.
 
 
-=========================================================
+
 PARENT REGISTRATION AND EMAIL VERIFICATION
 =========================================================
 
@@ -153,7 +153,7 @@ After successful verification and login, the parent profile is created and
 linked to the registered email address.
 
 
-=========================================================
+
 BOOKING AND PAYMENT PROCESS
 =========================================================
 
@@ -172,7 +172,7 @@ The booking process works as follows:
 11. The Parent can view the updated booking and payment status.
 
 
-=========================================================
+
 LEARNER PROGRESS
 =========================================================
 
@@ -189,7 +189,7 @@ Progress information is stored in Supabase and displayed to the appropriate
 Parent/Guardian through the "My Child's Progress" page.
 
 
-=========================================================
+
 PAYMENT PROOF STORAGE
 =========================================================
 
@@ -203,7 +203,7 @@ The database stores the storage path together with the corresponding payment
 and booking information.
 
 
-=========================================================
+
 ROLE-BASED ACCESS
 =========================================================
 
@@ -229,7 +229,7 @@ For example, a Tutor attempting to access an Administrator-only page is
 redirected to the login page.
 
 
-=========================================================
+
 SECURITY
 =========================================================
 
@@ -251,7 +251,7 @@ The Supabase publishable key used by the frontend is not a service-role key.
 Sensitive administrative credentials must never be stored in frontend code.
 
 
-=========================================================
+
 DEPLOYMENT
 =========================================================
 
@@ -263,7 +263,7 @@ Supabase provides the hosted database, authentication, storage, and backend
 services used by the deployed application.
 
 
-=========================================================
+
 CURRENT SYSTEM FLOW
 =========================================================
 
@@ -286,7 +286,7 @@ Tutor Updates Learner Progress
 Parent Views Learner Progress
 
 
-=========================================================
+
 FUTURE IMPROVEMENTS
 =========================================================
 
@@ -301,7 +301,7 @@ Future improvements may include:
 - Additional reporting and analytics.
 
 
-=========================================================
+
 IMPORTANT SECURITY NOTE
 =========================================================
 
