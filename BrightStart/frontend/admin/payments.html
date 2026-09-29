@@ -19,137 +19,245 @@
     <script src="../js/app.js"></script>
 
     <script>
+
         adminGuard();
 
-        const a = store.get('bs_bookings', []);
+
+        async function loadPayments() {
+
+            const { data, error } =
+                await supabaseClient
+                    .from('payments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
 
-        shell(
-            'admin',
-            'payments',
-            'Payment Verification',
+            if (error) {
 
-            `
-            <h1>Verify Proof of Payment</h1>
+                console.error(error);
 
-            <div class="table-wrap">
+                alert(
+                    'Could not load payments: ' +
+                    error.message
+                );
 
-                <table>
-
-                    <tr>
-                        <th>Ref</th>
-                        <th>Parent</th>
-                        <th>Amount</th>
-                        <th>Proof</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-
-                    ${a.map(b => `
-
-                        <tr>
-
-                            <td>
-                                ${b.id}
-                            </td>
-
-                            <td>
-                                ${b.email}
-                            </td>
-
-                            <td>
-                                R${b.total}
-                            </td>
-
-                            <td>
-                                ${b.proof || 'Not uploaded'}
-                            </td>
-
-                            <td>
-                                ${b.paymentStatus}
-                            </td>
-
-                            <td>
-
-                                ${b.proof && b.paymentStatus !== 'Verified' ? `
-
-                                    <button
-                                        class="btn btn-green"
-                                        onclick="verify('${b.id}')"
-                                    >
-                                        Verify
-                                    </button>
-
-                                    <button
-                                        class="btn btn-outline"
-                                        onclick="rejectPay('${b.id}')"
-                                    >
-                                        Reject
-                                    </button>
-
-                                ` : '—'}
-
-                            </td>
-
-                        </tr>
-
-                    `).join('') || `
-
-                        <tr>
-                            <td colspan="6">
-                                No payments.
-                            </td>
-                        </tr>
-
-                    `}
-
-                </table>
-
-            </div>
-            `
-        );
+                return;
+            }
 
 
-        function verify(id) {
+            const payments = data || [];
 
-            const all = store.get('bs_bookings', []);
-            const b = all.find(x => x.id === id);
 
-            b.paymentStatus = 'Verified';
-            b.bookingStatus = 'Confirmed';
-
-            store.set('bs_bookings', all);
-
-            notifyParent(
-                b.email,
-                `Payment for booking ${b.id} has been verified. Your tutoring session is confirmed and good to go.`
+            console.log(
+                'Payments from Supabase:',
+                payments
             );
 
-            alert(
-                'Payment verified. An in-app notification was sent to the parent.'
+
+            shell(
+                'admin',
+                'payments',
+                'Payment Verification',
+
+                `
+                <h1>Verify Proof of Payment</h1>
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <tr>
+                            <th>Booking Ref</th>
+                            <th>Parent</th>
+                            <th>Amount</th>
+                            <th>Proof</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+
+
+                        ${payments.map(p => `
+
+                            <tr>
+
+                                <td>
+                                    ${p.booking_id || '—'}
+                                </td>
+
+                                <td>
+                                    ${p.parent_email}
+                                </td>
+
+                                <td>
+                                    R${p.amount}
+                                </td>
+
+                                <td>
+                                    ${p.proof_of_payment || 'Not uploaded'}
+                                </td>
+
+                                <td>
+                                    ${p.payment_status}
+                                </td>
+
+                                <td>
+
+                                    ${p.payment_status !== 'Verified' ? `
+
+                                        <button
+                                            class="btn btn-green"
+                                            onclick="verifyPayment(${p.id}, ${p.booking_id || 'null'})"
+                                        >
+                                            Verify
+                                        </button>
+
+                                        <button
+                                            class="btn btn-outline"
+                                            onclick="rejectPayment(${p.id}, ${p.booking_id || 'null'})"
+                                        >
+                                            Reject
+                                        </button>
+
+                                    ` : 'Verified ✓'}
+
+                                </td>
+
+                            </tr>
+
+                        `).join('') || `
+
+                            <tr>
+
+                                <td colspan="6">
+                                    No payments.
+                                </td>
+
+                            </tr>
+
+                        `}
+
+                    </table>
+
+                </div>
+                `
             );
+        }
+
+
+        async function verifyPayment(paymentId, bookingId) {
+
+            const { error: paymentError } =
+                await supabaseClient
+                    .from('payments')
+                    .update({
+                        payment_status: 'Verified',
+                        verified_at: new Date().toISOString()
+                    })
+                    .eq('id', paymentId);
+
+
+            if (paymentError) {
+
+                console.error(paymentError);
+
+                alert(
+                    'Payment could not be verified: ' +
+                    paymentError.message
+                );
+
+                return;
+            }
+
+
+            if (bookingId) {
+
+                const { error: bookingError } =
+                    await supabaseClient
+                        .from('bookings')
+                        .update({
+                            status: 'Confirmed'
+                        })
+                        .eq('id', bookingId);
+
+
+                if (bookingError) {
+
+                    console.error(bookingError);
+
+                    alert(
+                        'Payment was verified, but booking status could not be updated: ' +
+                        bookingError.message
+                    );
+
+                    return;
+                }
+            }
+
+
+            alert('Payment verified successfully.');
 
             location.reload();
         }
 
 
-        function rejectPay(id) {
+        async function rejectPayment(paymentId, bookingId) {
 
-            const all = store.get('bs_bookings', []);
-            const b = all.find(x => x.id === id);
+            const { error: paymentError } =
+                await supabaseClient
+                    .from('payments')
+                    .update({
+                        payment_status: 'Rejected',
+                        verified_at: null
+                    })
+                    .eq('id', paymentId);
 
-            b.paymentStatus = 'Rejected';
-            b.bookingStatus = 'Payment Action Required';
 
-            store.set('bs_bookings', all);
+            if (paymentError) {
 
-            notifyParent(
-                b.email,
-                `Proof of payment for booking ${b.id} could not be verified. Please upload a new proof of payment or contact BrightStart.`
-            );
+                console.error(paymentError);
+
+                alert(
+                    'Payment could not be rejected: ' +
+                    paymentError.message
+                );
+
+                return;
+            }
+
+
+            if (bookingId) {
+
+                const { error: bookingError } =
+                    await supabaseClient
+                        .from('bookings')
+                        .update({
+                            status: 'Payment Action Required'
+                        })
+                        .eq('id', bookingId);
+
+
+                if (bookingError) {
+
+                    console.error(bookingError);
+
+                    alert(
+                        'Payment was rejected, but booking status could not be updated: ' +
+                        bookingError.message
+                    );
+
+                    return;
+                }
+            }
+
+
+            alert('Payment rejected.');
 
             location.reload();
         }
+
+
+        loadPayments();
+
     </script>
 
 </body>
