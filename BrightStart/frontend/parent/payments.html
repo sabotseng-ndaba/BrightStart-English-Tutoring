@@ -173,6 +173,33 @@
 
             if (el.files[0]) {
 
+                const file = el.files[0];
+
+                // Create a unique name for the uploaded proof
+                const fileName =
+                    `${Date.now()}-${file.name}`;
+
+                // Upload the actual file to Supabase Storage
+                const { data: uploadData, error: uploadError } =
+                    await supabaseClient
+                        .storage
+                        .from('payment-proofs')
+                        .upload(fileName, file);
+
+                if (uploadError) {
+
+                    console.error(uploadError);
+
+                    alert(
+                        'Proof could not be uploaded: ' +
+                        uploadError.message
+                    );
+
+                    return;
+                }
+
+
+                // Save payment information in Supabase
                 const { data: paymentData, error: paymentError } =
                     await supabaseClient
                         .from('payments')
@@ -182,12 +209,14 @@
                                 parent_email: s.email,
                                 amount: b.total,
                                 payment_method: 'EFT / Bank Deposit',
-                                proof_of_payment: el.files[0].name,
+                                proof_of_payment: uploadData.path,
                                 payment_status: 'Pending Verification'
                             }
                         ]);
 
+
                 if (paymentError) {
+
                     console.error(paymentError);
 
                     alert(
@@ -199,13 +228,11 @@
                 }
 
 
-                b.proof =
-                    el.files[0].name;
-
+                // Update the local booking information
+                b.proof = uploadData.path;
 
                 b.paymentStatus =
                     'Pending Verification';
-
 
                 b.bookingStatus =
                     'Awaiting Verification';
@@ -224,6 +251,7 @@
 
                 location.reload();
             }
+
         }
 
     </script>

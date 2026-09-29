@@ -12,13 +12,38 @@
 
 <body>
 
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
 
     <script>
         adminGuard();
 
-        const a = store.get('bs_bookings', []);
+        let a = [];
+
+        async function loadBookings() {
+
+            const { data, error } =
+                await supabaseClient
+                    .from('bookings')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                alert('Could not load bookings: ' + error.message);
+                return;
+            }
+
+            a = data || [];
+
+            console.log('Bookings from Supabase:', a);
+        }
+
+        await loadBookings();
+
 
 
         shell(
@@ -46,11 +71,11 @@
 
                         <tr>
                             <td>${b.id}</td>
-                            <td>${b.learner}</td>
+                            <td>${b.child_name}</td>
                             <td>${b.program}</td>
-                            <td>${b.date}</td>
-                            <td>${b.bookingStatus}</td>
-                            <td>${b.paymentStatus}</td>
+                            <td>${b.booking_date}</td>
+                            <td>${b.status}</td>
+                            <td>Pending</td>
                         </tr>
 
                     `).join('') || `
