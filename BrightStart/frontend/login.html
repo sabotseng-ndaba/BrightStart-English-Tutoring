@@ -59,12 +59,6 @@
                 </a>
             </p>
 
-            <p class="small">
-                Demo Tutor/Admin:
-                amanda.jacobs@brightstartenglish.co.za
-                · Password: Aobs
-            </p>
-
         </div>
 
     </div>
@@ -117,17 +111,80 @@
                     return;
                 }
 
-                const { data: parentData, error: parentError } =
+                // Look for an existing parent profile
+                let { data: parentData, error: parentError } =
                     await supabaseClient
                         .from('parents')
                         .select('*')
                         .eq('email', data.user.email)
-                        .single();
+                        .maybeSingle();
 
                 if (parentError) {
                     console.error(parentError);
-                    msg.textContent = 'Could not load parent profile: ' + parentError.message;
+                    msg.textContent =
+                        'Could not load parent profile: ' +
+                        parentError.message;
                     return;
+                }
+
+
+                // If this is the parent's first login after email verification,
+                // create their parent profile using the details saved at registration.
+                if (!parentData) {
+
+                    const metadata =
+                        data.user.user_metadata || {};
+
+                    const {
+                        data: newParent,
+                        error: createError
+                    } =
+                        await supabaseClient
+                            .from('parents')
+                            .insert([
+                                {
+                                    email:
+                                        data.user.email,
+
+                                    phone:
+                                        metadata.phone || '',
+
+                                    first_name:
+                                        metadata.first_name || '',
+
+                                    last_name:
+                                        metadata.last_name || '',
+
+                                    child_first_name:
+                                        metadata.child_first_name || '',
+
+                                    child_last_name:
+                                        metadata.child_last_name || '',
+
+                                    child_gender:
+                                        metadata.child_gender || '',
+
+                                    child_grade:
+                                        metadata.child_grade || ''
+                                }
+                            ])
+                            .select()
+                            .single();
+
+
+                    if (createError) {
+
+                        console.error(createError);
+
+                        msg.textContent =
+                            'Could not create parent profile: ' +
+                            createError.message;
+
+                        return;
+                    }
+
+
+                    parentData = newParent;
                 }
 
                 store.set('bs_session', {

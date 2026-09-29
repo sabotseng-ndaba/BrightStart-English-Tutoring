@@ -19,10 +19,7 @@
             <!-- BrightStart Branding -->
             <div class="brand">
 
-                <img
-                    src="assets/images/sun-book.png"
-                    alt="BrightStart logo"
-                >
+                <img src="assets/images/sun-book.png" alt="BrightStart logo">
 
                 <div>
                     <strong>BrightStart</strong>
@@ -57,21 +54,12 @@
 
                 <div class="field">
                     <label>Password</label>
-                    <input
-                        id="password"
-                        type="password"
-                        minlength="6"
-                        required
-                    >
+                    <input id="password" type="password" minlength="6" required>
                 </div>
 
                 <div class="field">
                     <label>Confirm Password</label>
-                    <input
-                        id="confirm"
-                        type="password"
-                        required
-                    >
+                    <input id="confirm" type="password" required>
                 </div>
 
                 <div class="field">
@@ -231,11 +219,38 @@
                 const {
                     data: authData,
                     error: authError
-                } =
-                    await supabaseClient.auth.signUp({
-                        email: emailValue,
-                        password: passwordValue
-                    });
+                } = await supabaseClient.auth.signUp({
+                    email: emailValue,
+                    password: passwordValue,
+
+                    options: {
+                        emailRedirectTo:
+                            'https://brightstart-english-tutoring-fronte.vercel.app/login.html',
+
+                        data: {
+                            first_name: parentFirstName,
+                            last_name: parentSurname,
+
+                            phone:
+                                document
+                                    .getElementById('phone')
+                                    .value,
+
+                            child_first_name: childFirstName,
+                            child_last_name: childSurname,
+
+                            child_gender:
+                                document
+                                    .getElementById('gender')
+                                    .value,
+
+                            child_grade:
+                                document
+                                    .getElementById('grade')
+                                    .value
+                        }
+                    }
+                });
 
 
                 if (authError) {
@@ -250,122 +265,18 @@
                 }
 
 
-                // Save parent and learner information
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from('parents')
-                        .insert([
-                            {
-                                email: emailValue,
+                // Do NOT create a local session yet.
+                // The parent must verify their email first.
+                message.textContent =
+                    'Account created! Please check your email and verify your account before signing in.';
 
-                                phone:
-                                    document
-                                        .getElementById('phone')
-                                        .value,
+                message.style.color = 'green';
 
-                                first_name:
-                                    parentFirstName,
-
-                                last_name:
-                                    parentSurname,
-
-                                child_first_name:
-                                    childFirstName,
-
-                                child_last_name:
-                                    childSurname,
-
-                                child_gender:
-                                    document
-                                        .getElementById('gender')
-                                        .value,
-
-                                child_grade:
-                                    document
-                                        .getElementById('grade')
-                                        .value
-                            }
-                        ]);
+                form.reset();
 
 
-                if (error) {
-
-                    console.error(error);
-
-                    message.textContent =
-                        'Registration failed: ' +
-                        error.message;
-
-                    return;
-                }
-
-
-                // Create local parent session
-                // Password is NOT stored here
-                const u = {
-
-                    first:
-                        parentFirstName,
-
-                    last:
-                        parentSurname,
-
-                    email:
-                        emailValue,
-
-                    phone:
-                        document
-                            .getElementById('phone')
-                            .value,
-
-                    child: {
-
-                        first:
-                            childFirstName,
-
-                        last:
-                            childSurname,
-
-                        gender:
-                            document
-                                .getElementById('gender')
-                                .value,
-
-                        grade:
-                            document
-                                .getElementById('grade')
-                                .value
-                    }
-                };
-
-
-                store.set(
-                    'bs_session',
-                    {
-                        role: 'parent',
-
-                        email:
-                            u.email,
-
-                        parentName:
-                            u.first +
-                            ' ' +
-                            u.last,
-
-                        child:
-                            u.child
-                    }
-                );
-
-
-                // Open parent dashboard
-                location.href =
-                    'parent/dashboard.html';
-            }
-        );
+              
+        });
 
     </script>
 
