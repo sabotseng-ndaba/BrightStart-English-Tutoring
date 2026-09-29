@@ -8,7 +8,7 @@ Tutors can view registered learners and update learner progress, while the
 Administrator manages bookings, payments, learners, and progress.
 
 
-=========================================================
+
 TECHNOLOGIES USED
 =========================================================
 
