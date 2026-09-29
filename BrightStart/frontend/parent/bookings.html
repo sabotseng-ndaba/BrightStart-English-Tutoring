@@ -19,96 +19,180 @@
     <script src="../js/app.js"></script>
 
     <script>
+
         parentGuard();
 
         const s = session();
 
-        const a = store
-            .get('bs_bookings', [])
-            .filter(b => b.email === s.email);
+
+        async function loadBookings() {
+
+            // Get this parent's bookings
+            const {
+                data: bookings,
+                error: bookingsError
+            } =
+                await supabaseClient
+                    .from('bookings')
+                    .select('*')
+                    .eq('parent_email', s.email)
+                    .order(
+                        'created_at',
+                        { ascending: false }
+                    );
 
 
-        shell(
-            'parent',
-            'bookings',
-            'My Bookings',
+            if (bookingsError) {
 
-            `
-            <h1>My Bookings</h1>
+                console.error(bookingsError);
 
-            <div class="table-wrap">
+                alert(
+                    'Could not load bookings: ' +
+                    bookingsError.message
+                );
 
-                <table>
+                return;
+            }
 
-                    <tr>
-                        <th>Reference</th>
-                        <th>Learner</th>
-                        <th>Program</th>
-                        <th>Date</th>
-                        <th>Total</th>
-                        <th>Booking</th>
-                        <th>Payment</th>
-                    </tr>
 
-                    ${a.map(b => `
+            // Get this parent's payments
+            const {
+                data: payments,
+                error: paymentsError
+            } =
+                await supabaseClient
+                    .from('payments')
+                    .select('*')
+                    .eq('parent_email', s.email);
 
-                        <tr>
 
-                            <td>
-                                ${b.id}
-                            </td>
+            if (paymentsError) {
 
-                            <td>
-                                ${b.learner}
-                            </td>
+                console.error(paymentsError);
 
-                            <td>
-                                ${b.program}
-                            </td>
+                alert(
+                    'Could not load payment information: ' +
+                    paymentsError.message
+                );
 
-                            <td>
-                                ${b.date}
-                            </td>
+                return;
+            }
 
-                            <td>
-                                R${b.total}
-                            </td>
 
-                            <td>
-                                ${b.bookingStatus}
-                            </td>
+            const a = bookings || [];
+            const paymentList = payments || [];
 
-                            <td>
 
-                                <span class="status ${
-                                    b.paymentStatus === 'Verified'
-                                        ? 'paid'
-                                        : 'pending'
-                                }">
+            shell(
+                'parent',
+                'bookings',
+                'My Bookings',
 
-                                    ${b.paymentStatus}
+                `
+                <h1>My Bookings</h1>
 
-                                </span>
+                <div class="table-wrap">
 
-                            </td>
-
-                        </tr>
-
-                    `).join('') || `
+                    <table>
 
                         <tr>
-                            <td colspan="7">
-                                No bookings yet.
-                            </td>
+                            <th>Reference</th>
+                            <th>Learner</th>
+                            <th>Program</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Booking</th>
+                            <th>Payment</th>
                         </tr>
 
-                    `}
 
-                </table>
+                        ${a.map(b => {
 
-            </div>
-            `
-        );
+                            const payment =
+                                paymentList.find(
+                                    p => Number(p.booking_id) === Number(b.id)
+                                );
+
+
+                            const paymentStatus =
+                                payment
+                                    ? payment.payment_status
+                                    : 'Pending';
+
+
+                            const amount =
+                                payment
+                                    ? `R${payment.amount}`
+                                    : '—';
+
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+                                        ${b.id}
+                                    </td>
+
+                                    <td>
+                                        ${b.child_name || '—'}
+                                    </td>
+
+                                    <td>
+                                        ${b.program || '—'}
+                                    </td>
+
+                                    <td>
+                                        ${b.booking_date || '—'}
+                                    </td>
+
+                                    <td>
+                                        ${amount}
+                                    </td>
+
+                                    <td>
+                                        ${b.status || '—'}
+                                    </td>
+
+                                    <td>
+
+                                        <span
+                                            class="status ${
+                                                paymentStatus === 'Verified'
+                                                    ? 'paid'
+                                                    : 'pending'
+                                            }"
+                                        >
+                                            ${paymentStatus}
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+                            `;
+
+                        }).join('') || `
+
+                            <tr>
+
+                                <td colspan="7">
+                                    No bookings yet.
+                                </td>
+
+                            </tr>
+
+                        `}
+
+                    </table>
+
+                </div>
+                `
+            );
+        }
+
+
+        loadBookings();
+
     </script>
 
 </body>

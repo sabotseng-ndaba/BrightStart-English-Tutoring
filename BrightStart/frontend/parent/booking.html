@@ -204,6 +204,8 @@
                             program: b.program,
                             booking_date: b.date,
                             booking_time: b.time,
+                            quantity: b.qty,
+                            amount: b.total,
                             status: b.bookingStatus
                         }
                     ])
@@ -219,35 +221,15 @@
                 return;
             }
 
-            b.supabaseBookingId = bookingData.id;
-
-            console.log('Supabase Booking ID:', b.supabaseBookingId);
-
-            const a =
-                store.get(
-                    'bs_bookings',
-                    []
-                );
-
-
-            a.unshift(b);
-
-
-            store.set(
-                'bs_bookings',
-                a
+            console.log(
+                'Booking saved successfully:',
+                bookingData.id
             );
-
-
-            store.set(
-                'bs_current_booking',
-                b.id
-            );
-
 
             location.href =
                 'payments.html';
-        };
+
+                };
 
     </script>
 

@@ -19,29 +19,85 @@
     <script src="../js/app.js"></script>
 
     <script>
+
         adminGuard();
 
-        const u = store.get('bs_parent');
 
-        const old = u
-            ? (store.get('bs_progress', {})[u.email] || {})
-            : {};
+        let learners = [];
+        let selectedLearner = null;
+        let existingProgressId = null;
 
 
-        shell(
-            'admin',
-            'progress',
-            'Update Learner Progress',
+        async function loadLearners() {
 
-            u ? `
+            const { data, error } =
+                await supabaseClient
+                    .from('parents')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-                <h1>
-                    ${u.child.first} ${u.child.last}
-                </h1>
+
+            if (error) {
+
+                console.error(error);
+
+                alert(
+                    'Could not load learners: ' +
+                    error.message
+                );
+
+                return;
+            }
+
+
+            learners = data || [];
+
+
+            shell(
+                'admin',
+                'progress',
+                'Update Learner Progress',
+
+                `
+                <h1>Update Learner Progress</h1>
+
 
                 <div class="card">
 
-                    <form id="pf" class="form-grid">
+                    <div class="field">
+
+                        <label>
+                            Select Learner
+                        </label>
+
+                        <select id="learnerSelect">
+
+                            <option value="">
+                                Choose a learner
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="progressSection"
+                    class="card"
+                    style="display: none; margin-top: 20px;"
+                >
+
+                    <h2 id="learnerName">
+                        Learner Progress
+                    </h2>
+
+
+                    <form
+                        id="progressForm"
+                        class="form-grid"
+                    >
 
                         <!-- Reading -->
                         <div class="field">
@@ -55,7 +111,7 @@
                                 type="number"
                                 min="0"
                                 max="100"
-                                value="${old.reading || 0}"
+                                required
                             >
 
                         </div>
@@ -73,7 +129,7 @@
                                 type="number"
                                 min="0"
                                 max="100"
-                                value="${old.writing || 0}"
+                                required
                             >
 
                         </div>
@@ -91,7 +147,7 @@
                                 type="number"
                                 min="0"
                                 max="100"
-                                value="${old.comprehension || 0}"
+                                required
                             >
 
                         </div>
@@ -109,13 +165,13 @@
                                 type="number"
                                 min="0"
                                 max="100"
-                                value="${old.speaking || 0}"
+                                required
                             >
 
                         </div>
 
 
-                        <!-- Tutor Comment -->
+                        <!-- Tutor Feedback -->
                         <div class="field full">
 
                             <label>
@@ -125,7 +181,8 @@
                             <textarea
                                 id="comment"
                                 rows="5"
-                            >${old.comment || ''}</textarea>
+                                placeholder="Enter feedback about the learner's progress..."
+                            ></textarea>
 
                         </div>
 
@@ -133,7 +190,10 @@
                         <!-- Save Button -->
                         <div class="field full">
 
-                            <button class="btn btn-blue">
+                            <button
+                                type="submit"
+                                class="btn btn-blue"
+                            >
                                 Save Progress
                             </button>
 
@@ -142,45 +202,252 @@
                     </form>
 
                 </div>
-
-            ` : `
-
-                <div class="notice">
-                    No parent/learner has registered yet.
-                </div>
-
-            `
-        );
+                `
+            );
 
 
-        if (u) {
+            const learnerSelect =
+                document.getElementById('learnerSelect');
 
-            pf.onsubmit = e => {
 
-                e.preventDefault();
+            learners.forEach((learner, index) => {
 
-                const p = store.get('bs_progress', {});
+                const option =
+                    document.createElement('option');
 
-                p[u.email] = {
-                    reading: +reading.value,
-                    writing: +writing.value,
-                    comprehension: +comprehension.value,
-                    speaking: +speaking.value,
-                    comment: comment.value
-                };
+                option.value = index;
 
-                store.set('bs_progress', p);
+                option.textContent =
+                    `${learner.child_first_name || ''} ${learner.child_last_name || ''} - Grade ${learner.child_grade || '—'}`;
 
-                notifyParent(
-                    u.email,
-                    `A new learning progress update has been added for ${u.child.first}.`
+                learnerSelect.appendChild(option);
+            });
+
+
+            learnerSelect.addEventListener(
+                'change',
+                selectLearner
+            );
+
+
+            document
+                .getElementById('progressForm')
+                .addEventListener(
+                    'submit',
+                    saveProgress
                 );
+        }
+
+
+        async function selectLearner() {
+
+            const learnerSelect =
+                document.getElementById('learnerSelect');
+
+
+            if (learnerSelect.value === '') {
+
+                selectedLearner = null;
+                existingProgressId = null;
+
+                document
+                    .getElementById('progressSection')
+                    .style.display = 'none';
+
+                return;
+            }
+
+
+            selectedLearner =
+                learners[Number(learnerSelect.value)];
+
+
+            document
+                .getElementById('progressSection')
+                .style.display = 'block';
+
+
+            document
+                .getElementById('learnerName')
+                .textContent =
+                    `${selectedLearner.child_first_name || ''} ${selectedLearner.child_last_name || ''}`;
+
+
+            await loadExistingProgress();
+        }
+
+
+        async function loadExistingProgress() {
+
+            existingProgressId = null;
+
+
+            document.getElementById('reading').value = 0;
+            document.getElementById('writing').value = 0;
+            document.getElementById('comprehension').value = 0;
+            document.getElementById('speaking').value = 0;
+            document.getElementById('comment').value = '';
+
+
+            const { data, error } =
+                await supabaseClient
+                    .from('progress')
+                    .select('*')
+                    .eq(
+                        'parent_email',
+                        selectedLearner.email
+                    )
+                    .order(
+                        'updated_at',
+                        { ascending: false }
+                    )
+                    .limit(1);
+
+
+            if (error) {
+
+                console.error(error);
 
                 alert(
-                    'Progress saved and parent notified.'
+                    'Could not load existing progress: ' +
+                    error.message
                 );
-            };
+
+                return;
+            }
+
+
+            if (data && data.length > 0) {
+
+                const progress = data[0];
+
+                existingProgressId =
+                    progress.id;
+
+
+                document.getElementById('reading').value =
+                    progress.reading || 0;
+
+                document.getElementById('writing').value =
+                    progress.writing || 0;
+
+                document.getElementById('comprehension').value =
+                    progress.comprehension || 0;
+
+                document.getElementById('speaking').value =
+                    progress.speaking || 0;
+
+                document.getElementById('comment').value =
+                    progress.tutor_feedback || '';
+            }
         }
+
+
+        async function saveProgress(event) {
+
+            event.preventDefault();
+
+
+            if (!selectedLearner) {
+
+                alert(
+                    'Please select a learner first.'
+                );
+
+                return;
+            }
+
+
+            const progressData = {
+
+                parent_email:
+                    selectedLearner.email,
+
+                child_name:
+                    `${selectedLearner.child_first_name || ''} ${selectedLearner.child_last_name || ''}`.trim(),
+
+                grade:
+                    selectedLearner.child_grade,
+
+                reading:
+                    document.getElementById('reading').value,
+
+                writing:
+                    document.getElementById('writing').value,
+
+                comprehension:
+                    document.getElementById('comprehension').value,
+
+                speaking:
+                    document.getElementById('speaking').value,
+
+                tutor_feedback:
+                    document.getElementById('comment').value,
+
+                updated_at:
+                    new Date().toISOString()
+            };
+
+
+            let error;
+
+
+            if (existingProgressId) {
+
+                const result =
+                    await supabaseClient
+                        .from('progress')
+                        .update(progressData)
+                        .eq(
+                            'id',
+                            existingProgressId
+                        );
+
+                error = result.error;
+
+            } else {
+
+                const result =
+                    await supabaseClient
+                        .from('progress')
+                        .insert([
+                            progressData
+                        ])
+                        .select()
+                        .single();
+
+                error = result.error;
+
+
+                if (!error && result.data) {
+
+                    existingProgressId =
+                        result.data.id;
+                }
+            }
+
+
+            if (error) {
+
+                console.error(error);
+
+                alert(
+                    'Progress could not be saved: ' +
+                    error.message
+                );
+
+                return;
+            }
+
+
+            alert(
+                'Learner progress saved successfully.'
+            );
+        }
+
+
+        loadLearners();
+
     </script>
 
 </body>

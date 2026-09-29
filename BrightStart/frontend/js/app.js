@@ -60,19 +60,7 @@ function seed() {
     }
 
 
-    if (!store.get('bs_bookings')) {
-        store.set('bs_bookings', []);
-    }
-
-
-    if (!store.get('bs_notifications')) {
-        store.set('bs_notifications', []);
-    }
-
-
-    if (!store.get('bs_progress')) {
-        store.set('bs_progress', {});
-    }
+    
 }
 
 seed();
@@ -767,39 +755,3 @@ function shell(
 }
 
 
-/* =========================================================
-   PARENT NOTIFICATIONS
-========================================================= */
-
-function notifyParent(
-    email,
-    message
-) {
-
-    const notifications =
-        store.get(
-            'bs_notifications',
-            []
-        );
-
-
-    notifications.unshift({
-
-        email: email,
-
-        message: message,
-
-        date:
-            new Date()
-                .toLocaleString(),
-
-        read: false
-
-    });
-
-
-    store.set(
-        'bs_notifications',
-        notifications
-    );
-}

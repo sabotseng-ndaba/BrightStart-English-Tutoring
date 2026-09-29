@@ -11,71 +11,188 @@
 </head>
 
 <body>
-    
+
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
 
     <script>
+
         adminGuard();
 
-        const a = store.get('bs_bookings', []);
-        const u = store.get('bs_parent');
 
-        shell(
-            'admin',
-            'dashboard',
-            'Admin Dashboard',
-            `
-            <div class="welcome">
+        async function loadDashboard() {
 
-                <div>
-                    <h1>BrightStart Tutor/Admin</h1>
+            // Get all bookings
+            const {
+                data: bookings,
+                error: bookingsError
+            } =
+                await supabaseClient
+                    .from('bookings')
+                    .select('id');
 
-                    <p>
-                        Manage bookings, payment verification,
-                        learners and progress.
-                    </p>
-                </div>
 
-                <img src="../assets/images/logo.png"
-                     alt="BrightStart Logo"
-                     style= "width:150px; height:150px; object-fit:contain;">
+            if (bookingsError) {
 
-            </div>
+                console.error(bookingsError);
 
-            <div class="cards">
+                alert(
+                    'Could not load booking information: ' +
+                    bookingsError.message
+                );
 
-                <div class="card">
-                    <h3>Bookings</h3>
+                return;
+            }
 
-                    <div class="metric">
-                        ${a.length}
+
+            // Get payments waiting for verification
+            const {
+                data: pendingPayments,
+                error: paymentsError
+            } =
+                await supabaseClient
+                    .from('payments')
+                    .select('id')
+                    .eq(
+                        'payment_status',
+                        'Pending Verification'
+                    );
+
+
+            if (paymentsError) {
+
+                console.error(paymentsError);
+
+                alert(
+                    'Could not load payment information: ' +
+                    paymentsError.message
+                );
+
+                return;
+            }
+
+
+            // Get registered learners
+            const {
+                data: learners,
+                error: learnersError
+            } =
+                await supabaseClient
+                    .from('parents')
+                    .select('id');
+
+
+            if (learnersError) {
+
+                console.error(learnersError);
+
+                alert(
+                    'Could not load learner information: ' +
+                    learnersError.message
+                );
+
+                return;
+            }
+
+
+            const bookingCount =
+                bookings ? bookings.length : 0;
+
+            const pendingCount =
+                pendingPayments
+                    ? pendingPayments.length
+                    : 0;
+
+            const learnerCount =
+                learners ? learners.length : 0;
+
+
+            shell(
+                'admin',
+                'dashboard',
+                'Admin Dashboard',
+
+                `
+                <div class="welcome">
+
+                    <div>
+
+                        <h1>
+                            BrightStart Tutor/Admin
+                        </h1>
+
+                        <p>
+                            Manage bookings, payment verification,
+                            learners and progress.
+                        </p>
+
                     </div>
+
+
+                    <img
+                        src="../assets/images/logo.png"
+                        alt="BrightStart Logo"
+                        style="
+                            width: 150px;
+                            height: 150px;
+                            object-fit: contain;
+                        "
+                    >
+
                 </div>
 
-                <div class="card">
-                    <h3>Awaiting Verification</h3>
 
-                    <div class="metric">
-                        ${
-                            a.filter(
-                                x => x.paymentStatus === 'Pending Verification'
-                            ).length
-                        }
+                <div class="cards">
+
+                    <div class="card">
+
+                        <h3>
+                            Bookings
+                        </h3>
+
+                        <div class="metric">
+                            ${bookingCount}
+                        </div>
+
                     </div>
-                </div>
 
-                <div class="card">
-                    <h3>Registered Learners</h3>
 
-                    <div class="metric">
-                        ${u ? 1 : 0}
+                    <div class="card">
+
+                        <h3>
+                            Awaiting Verification
+                        </h3>
+
+                        <div class="metric">
+                            ${pendingCount}
+                        </div>
+
                     </div>
-                </div>
 
-            </div>
-            `
-        );
+
+                    <div class="card">
+
+                        <h3>
+                            Registered Learners
+                        </h3>
+
+                        <div class="metric">
+                            ${learnerCount}
+                        </div>
+
+                    </div>
+
+                </div>
+                `
+            );
+        }
+
+
+        loadDashboard();
+
     </script>
 
 </body>

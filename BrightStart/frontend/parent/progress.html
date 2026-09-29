@@ -19,92 +19,150 @@
     <script src="../js/app.js"></script>
 
     <script>
+
         parentGuard();
 
         const s = session();
         const c = s.child || {};
 
-        const p = store.get('bs_progress', {})[s.email] || {
-            reading: 0,
-            writing: 0,
-            comprehension: 0,
-            speaking: 0,
-            comment: 'No tutor progress update has been added yet.'
-        };
+
+        async function loadProgress() {
+
+            const { data, error } =
+                await supabaseClient
+                    .from('progress')
+                    .select('*')
+                    .eq('parent_email', s.email)
+                    .order(
+                        'updated_at',
+                        { ascending: false }
+                    )
+                    .limit(1);
 
 
-        shell(
-            'parent',
-            'progress',
-            "My Child's Progress",
+            if (error) {
 
-            `
-            <div class="progress-wrap">
+                console.error(error);
 
-                <!-- Child Information -->
-                <div class="card child-card">
+                alert(
+                    'Could not load progress: ' +
+                    error.message
+                );
 
-                    <img
-                        src="../assets/images/${c.gender === 'Boy' ? 'boy.png' : 'girl.png'}"
-                    >
+                return;
+            }
 
-                    <h2>
-                        ${c.first || ''} ${c.last || ''}
-                    </h2>
 
-                    <p>
-                        ${c.grade || ''}
-                    </p>
+            const p =
+                data && data.length > 0
+
+                    ? data[0]
+
+                    : {
+                        reading: 0,
+                        writing: 0,
+                        comprehension: 0,
+                        speaking: 0,
+                        tutor_feedback:
+                            'No tutor progress update has been added yet.'
+                    };
+
+
+            shell(
+                'parent',
+                'progress',
+                "My Child's Progress",
+
+                `
+                <div class="progress-wrap">
+
+                    <!-- Child Information -->
+                    <div class="card child-card">
+
+                        <img
+                            src="../assets/images/${c.gender === 'Boy'
+                                ? 'boy.png'
+                                : 'girl.png'
+                            }"
+                        >
+
+                        <h2>
+                            ${c.first || ''}
+                            ${c.last || ''}
+                        </h2>
+
+                        <p>
+                            ${c.grade || ''}
+                        </p>
+
+                    </div>
+
+
+                    <!-- Progress Information -->
+                    <div class="card">
+
+                        <h2>
+                            Skills Overview
+                        </h2>
+
+
+                        ${[
+                            'reading',
+                            'writing',
+                            'comprehension',
+                            'speaking'
+
+                        ].map(skill => {
+
+                            const value =
+                                Number(p[skill]) || 0;
+
+                            return `
+
+                                <div class="bar-row">
+
+                                    <b>
+                                        ${skill[0].toUpperCase()
+                                            + skill.slice(1)}
+                                    </b>
+
+                                    <div class="bar">
+
+                                        <span
+                                            style="width: ${value}%"
+                                        ></span>
+
+                                    </div>
+
+                                    <b>
+                                        ${value}%
+                                    </b>
+
+                                </div>
+                            `;
+
+                        }).join('')}
+
+
+                        <h3>
+                            Tutor Comments
+                        </h3>
+
+                        <p>
+                            ${p.tutor_feedback ||
+                            'No tutor progress update has been added yet.'}
+                        </p>
+
+                    </div>
 
                 </div>
+                `
+            );
+        }
 
 
-                <!-- Progress Information -->
-                <div class="card">
+        loadProgress();
 
-                    <h2>
-                        Skills Overview
-                    </h2>
-
-                    ${[
-                        'reading',
-                        'writing',
-                        'comprehension',
-                        'speaking'
-                    ].map(k => `
-
-                        <div class="bar-row">
-
-                            <b>
-                                ${k[0].toUpperCase() + k.slice(1)}
-                            </b>
-
-                            <div class="bar">
-                                <span style="width: ${p[k]}%"></span>
-                            </div>
-
-                            <b>
-                                ${p[k]}%
-                            </b>
-
-                        </div>
-
-                    `).join('')}
-
-
-                    <h3>
-                        Tutor Comments
-                    </h3>
-
-                    <p>
-                        ${p.comment}
-                    </p>
-
-                </div>
-
-            </div>
-            `
-        );
     </script>
 
 </body>

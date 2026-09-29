@@ -19,70 +19,112 @@
     <script src="../js/app.js"></script>
 
     <script>
+
         adminGuard();
 
-        const u = store.get('bs_parent');
+
+        async function loadLearners() {
+
+            const { data, error } =
+                await supabaseClient
+                    .from('parents')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
 
-        shell(
-            'admin',
-            'learners',
-            'Learners',
+            if (error) {
 
-            `
-            <h1>Registered Learners</h1>
+                console.error(error);
 
-            <div class="table-wrap">
+                alert(
+                    'Could not load learners: ' +
+                    error.message
+                );
 
-                <table>
+                return;
+            }
 
-                    <tr>
-                        <th>Learner</th>
-                        <th>Gender</th>
-                        <th>Grade</th>
-                        <th>Parent</th>
-                        <th>Email</th>
-                    </tr>
 
-                    ${u ? `
+            const learners = data || [];
 
-                        <tr>
-                            <td>
-                                ${u.child.first} ${u.child.last}
-                            </td>
 
-                            <td>
-                                ${u.child.gender}
-                            </td>
+            console.log(
+                'Learners from Supabase:',
+                learners
+            );
 
-                            <td>
-                                ${u.child.grade}
-                            </td>
 
-                            <td>
-                                ${u.first} ${u.last}
-                            </td>
+            shell(
+                'admin',
+                'learners',
+                'Learners',
 
-                            <td>
-                                ${u.email}
-                            </td>
-                        </tr>
+                `
+                <h1>Registered Learners</h1>
 
-                    ` : `
+                <div class="table-wrap">
+
+                    <table>
 
                         <tr>
-                            <td colspan="5">
-                                No registered learners yet.
-                            </td>
+                            <th>Learner</th>
+                            <th>Gender</th>
+                            <th>Grade</th>
+                            <th>Parent</th>
+                            <th>Email</th>
                         </tr>
 
-                    `}
 
-                </table>
+                        ${learners.map(u => `
 
-            </div>
-            `
-        );
+                            <tr>
+
+                                <td>
+                                    ${u.child_first_name || ''}
+                                    ${u.child_last_name || ''}
+                                </td>
+
+                                <td>
+                                    ${u.child_gender || '—'}
+                                </td>
+
+                                <td>
+                                    ${u.child_grade || '—'}
+                                </td>
+
+                                <td>
+                                    ${u.first_name || ''}
+                                    ${u.last_name || ''}
+                                </td>
+
+                                <td>
+                                    ${u.email || '—'}
+                                </td>
+
+                            </tr>
+
+                        `).join('') || `
+
+                            <tr>
+
+                                <td colspan="5">
+                                    No registered learners yet.
+                                </td>
+
+                            </tr>
+
+                        `}
+
+                    </table>
+
+                </div>
+                `
+            );
+        }
+
+
+        loadLearners();
+
     </script>
 
 </body>

@@ -12,7 +12,10 @@
 
 <body>
 
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Main Application JavaScript -->
     <script src="../js/app.js"></script>
 
     <script>
@@ -21,238 +24,437 @@
 
         const s = session();
 
-        const a = store
-            .get('bs_bookings', [])
-            .filter(b => b.email === s.email);
+
+        async function loadPayments() {
+
+            // Get this parent's bookings
+            const {
+                data: bookings,
+                error: bookingsError
+            } =
+                await supabaseClient
+                    .from('bookings')
+                    .select('*')
+                    .eq('parent_email', s.email)
+                    .order(
+                        'created_at',
+                        { ascending: false }
+                    );
 
 
-        shell(
-            'parent',
-            'payments',
-            'Payments',
+            if (bookingsError) {
 
-            `
-            <h1>EFT / Bank Deposit</h1>
+                console.error(bookingsError);
 
+                alert(
+                    'Could not load bookings: ' +
+                    bookingsError.message
+                );
 
-            <div class="notice">
-                Demo details only — replace with approved BrightStart
-                banking details before real use.
-            </div>
+                return;
+            }
 
 
-            <div class="card">
-
-                <b>Account Name:</b>
-                BrightStart English Tutoring
-
-                <br>
-
-                <b>Bank:</b>
-                Demo Bank
-
-                <br>
-
-                <b>Account:</b>
-                000 000 0000
-
-                <br>
-
-                <b>Reference:</b>
-                Use your booking reference
-
-            </div>
+            // Get this parent's payments
+            const {
+                data: payments,
+                error: paymentsError
+            } =
+                await supabaseClient
+                    .from('payments')
+                    .select('*')
+                    .eq('parent_email', s.email)
+                    .order(
+                        'created_at',
+                        { ascending: false }
+                    );
 
 
-            <h2>Your Payments</h2>
+            if (paymentsError) {
+
+                console.error(paymentsError);
+
+                alert(
+                    'Could not load payments: ' +
+                    paymentsError.message
+                );
+
+                return;
+            }
 
 
-            <div class="table-wrap">
-
-                <table>
-
-                    <tr>
-                        <th>Reference</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Proof</th>
-                    </tr>
+            const bookingList = bookings || [];
+            const paymentList = payments || [];
 
 
-                    ${a.map(
-                b => `
+            shell(
+                'parent',
+                'payments',
+                'Payments',
+
+                `
+                <h1>EFT / Bank Deposit</h1>
+
+
+                <div class="notice">
+
+                    Demo details only — replace with approved
+                    BrightStart banking details before real use.
+
+                </div>
+
+
+                <div class="card">
+
+                    <b>Account Name:</b>
+                    BrightStart English Tutoring
+
+                    <br>
+
+                    <b>Bank:</b>
+                    Demo Bank
+
+                    <br>
+
+                    <b>Account:</b>
+                    000 000 0000
+
+                    <br>
+
+                    <b>Reference:</b>
+                    Use your booking reference
+
+                </div>
+
+
+                <h2>Your Payments</h2>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <tr>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Proof</th>
+                        </tr>
+
+
+                        ${bookingList.map(b => {
+
+                            const payment =
+                                paymentList.find(
+                                    p =>
+                                        Number(p.booking_id) ===
+                                        Number(b.id)
+                                );
+
+
+                            const paymentStatus =
+                                payment
+                                    ? payment.payment_status
+                                    : 'Pending';
+
+
+                            const amount =
+                                b.amount !== null
+                                    ? `R${b.amount}`
+                                    : '—';
+
+
+                            let proofSection = '';
+
+
+                            if (paymentStatus === 'Verified') {
+
+                                proofSection =
+                                    'Verified ✓';
+
+                            } else if (
+                                paymentStatus ===
+                                'Pending Verification'
+                            ) {
+
+                                proofSection = `
+
+                                    <div>
+                                        Proof submitted
+                                    </div>
+
+                                    <div class="small">
+                                        ${payment.proof_of_payment || ''}
+                                    </div>
+                                `;
+
+                            } else if (b.amount === null) {
+
+                                proofSection = `
+
+                                    <div class="small">
+                                        Amount unavailable for this
+                                        older booking.
+                                    </div>
+                                `;
+
+                            } else {
+
+                                proofSection = `
+
+                                    <input
+                                        type="file"
+                                        accept=".pdf,image/*"
+                                        onchange="uploadProof(${b.id}, this)"
+                                    >
+
+                                    <div class="small">
+                                        Upload PDF or image proof
+                                    </div>
+                                `;
+                            }
+
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+                                        ${b.id}
+                                    </td>
+
+                                    <td>
+                                        ${amount}
+                                    </td>
+
+                                    <td>
+
+                                        <span
+                                            class="status ${
+                                                paymentStatus === 'Verified'
+                                                    ? 'paid'
+                                                    : 'pending'
+                                            }"
+                                        >
+                                            ${paymentStatus}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        ${proofSection}
+                                    </td>
+
+                                </tr>
+                            `;
+
+                        }).join('') || `
 
                             <tr>
 
-                                <td>
-                                    ${b.id}
-                                </td>
-
-
-                                <td>
-                                    R${b.total}
-                                </td>
-
-
-                                <td>
-
-                                    <span
-                                        class="status ${b.paymentStatus === 'Verified'
-                        ? 'paid'
-                        : 'pending'
-                    }"
-                                    >
-                                        ${b.paymentStatus}
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    ${b.paymentStatus === 'Verified'
-
-                        ? 'Verified ✓'
-
-                        : `
-
-                                                <input
-                                                    type="file"
-                                                    onchange="uploadProof('${b.id}', this)"
-                                                >
-
-                                                <div class="small">
-                                                    ${b.proof || 'No file selected'}
-                                                </div>
-
-                                              `
-                    }
-
+                                <td colspan="4">
+                                    Book a session first.
                                 </td>
 
                             </tr>
 
-                            `
-            ).join('')
+                        `}
 
-            ||
+                    </table>
 
-            `
-                        <tr>
-                            <td colspan="4">
-                                Book a session first.
-                            </td>
-                        </tr>
-                        `
+                </div>
+                `
+            );
+        }
+
+
+        async function uploadProof(bookingId, el) {
+
+            const file = el.files[0];
+
+
+            if (!file) {
+                return;
             }
 
-                </table>
 
-            </div>
-            `
-        );
-
-
-        async function uploadProof(id, el) {
-
-            const all =
-                store.get(
-                    'bs_bookings',
-                    []
-                );
+            // Get the booking directly from Supabase
+            const {
+                data: booking,
+                error: bookingError
+            } =
+                await supabaseClient
+                    .from('bookings')
+                    .select('*')
+                    .eq('id', bookingId)
+                    .eq('parent_email', s.email)
+                    .single();
 
 
-            const b =
-                all.find(
-                    x => x.id === id
-                );
+            if (bookingError || !booking) {
 
-
-
-
-
-            if (el.files[0]) {
-
-                const file = el.files[0];
-
-                // Create a unique name for the uploaded proof
-                const fileName =
-                    `${Date.now()}-${file.name}`;
-
-                // Upload the actual file to Supabase Storage
-                const { data: uploadData, error: uploadError } =
-                    await supabaseClient
-                        .storage
-                        .from('payment-proofs')
-                        .upload(fileName, file);
-
-                if (uploadError) {
-
-                    console.error(uploadError);
-
-                    alert(
-                        'Proof could not be uploaded: ' +
-                        uploadError.message
-                    );
-
-                    return;
-                }
-
-
-                // Save payment information in Supabase
-                const { data: paymentData, error: paymentError } =
-                    await supabaseClient
-                        .from('payments')
-                        .insert([
-                            {
-                                booking_id: b.supabaseBookingId,
-                                parent_email: s.email,
-                                amount: b.total,
-                                payment_method: 'EFT / Bank Deposit',
-                                proof_of_payment: uploadData.path,
-                                payment_status: 'Pending Verification'
-                            }
-                        ]);
-
-
-                if (paymentError) {
-
-                    console.error(paymentError);
-
-                    alert(
-                        'Payment could not be submitted: ' +
-                        paymentError.message
-                    );
-
-                    return;
-                }
-
-
-                // Update the local booking information
-                b.proof = uploadData.path;
-
-                b.paymentStatus =
-                    'Pending Verification';
-
-                b.bookingStatus =
-                    'Awaiting Verification';
-
-
-                store.set(
-                    'bs_bookings',
-                    all
-                );
-
+                console.error(bookingError);
 
                 alert(
-                    'Proof of payment submitted for admin verification.'
+                    'Could not find this booking.'
+                );
+
+                return;
+            }
+
+
+            if (booking.amount === null) {
+
+                alert(
+                    'This older booking does not have an amount saved.'
+                );
+
+                return;
+            }
+
+
+            // Get the authenticated Supabase user
+            const {
+                data: userData,
+                error: userError
+            } =
+                await supabaseClient.auth.getUser();
+
+
+            if (
+                userError ||
+                !userData ||
+                !userData.user
+            ) {
+
+                console.error(userError);
+
+                alert(
+                    'Please sign in again before uploading proof.'
+                );
+
+                return;
+            }
+
+
+            const user =
+                userData.user;
+
+
+            // Make the filename safe
+            const safeName =
+                file.name.replace(
+                    /[^a-zA-Z0-9._-]/g,
+                    '_'
                 );
 
 
-                location.reload();
+            const filePath =
+                `${user.id}/${booking.id}-${Date.now()}-${safeName}`;
+
+
+            // Upload the actual file
+            const {
+                data: uploadData,
+                error: uploadError
+            } =
+                await supabaseClient
+                    .storage
+                    .from('payment-proofs')
+                    .upload(
+                        filePath,
+                        file,
+                        {
+                            cacheControl: '3600',
+                            upsert: false
+                        }
+                    );
+
+
+            if (uploadError) {
+
+                console.error(uploadError);
+
+                alert(
+                    'Proof could not be uploaded: ' +
+                    uploadError.message
+                );
+
+                return;
             }
 
+
+            // Save payment information
+            const {
+                error: paymentError
+            } =
+                await supabaseClient
+                    .from('payments')
+                    .insert([
+                        {
+                            booking_id: booking.id,
+                            parent_email: s.email,
+                            amount: booking.amount,
+                            payment_method:
+                                'EFT / Bank Deposit',
+                            proof_of_payment:
+                                uploadData.path,
+                            payment_status:
+                                'Pending Verification'
+                        }
+                    ]);
+
+
+            if (paymentError) {
+
+                console.error(paymentError);
+
+                alert(
+                    'Payment could not be submitted: ' +
+                    paymentError.message
+                );
+
+                return;
+            }
+
+
+            // Update the booking status
+            const {
+                error: statusError
+            } =
+                await supabaseClient
+                    .from('bookings')
+                    .update({
+                        status:
+                            'Awaiting Verification'
+                    })
+                    .eq('id', booking.id);
+
+
+            if (statusError) {
+
+                console.error(statusError);
+
+                alert(
+                    'Proof was submitted, but the booking status ' +
+                    'could not be updated: ' +
+                    statusError.message
+                );
+
+                return;
+            }
+
+
+            alert(
+                'Proof of payment submitted for admin verification.'
+            );
+
+
+            location.reload();
         }
+
+
+        loadPayments();
 
     </script>
 
